@@ -24,12 +24,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Action = Lumina.Excel.Sheets.Action;
 
 namespace PandorasBox.Features.Other
 {
     public unsafe class PandoraGathering : Feature
     {
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
+        private const byte VK_ESCAPE = 0x1B;
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+
+        private void SendEscape()
+        {
+            keybd_event(VK_ESCAPE, 0, 0, UIntPtr.Zero);
+            keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        }
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
@@ -265,11 +277,7 @@ namespace PandorasBox.Features.Other
                         TaskManager.EnqueueDelay(200);
                         TaskManager.Enqueue(() =>
                         {
-                            var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                            if (closeAddon != null && closeAddon->IsVisible)
-                            {
-                                closeAddon->Close(true);
-                            }
+                            SendEscape();
                             limitReached = false;
                             currentGatherCount = 0;
                             lastIntegrity = 0;
@@ -604,11 +612,7 @@ namespace PandorasBox.Features.Other
                                 TaskManager.EnqueueDelay(100);
                                 TaskManager.Enqueue(() =>
                                 {
-                                    var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                                    if (closeAddon != null && closeAddon->IsVisible)
-                                    {
-                                        closeAddon->Close(true);
-                                    }
+                                    SendEscape();
                                     limitReached = false;
                                     return true;
                                 });
@@ -794,11 +798,7 @@ namespace PandorasBox.Features.Other
                                     TaskManager.EnqueueDelay(100);
                                     TaskManager.Enqueue(() =>
                                     {
-                                        var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                                        if (closeAddon != null && closeAddon->IsVisible)
-                                        {
-                                            closeAddon->Close(true);
-                                        }
+                                        SendEscape();
                                         limitReached = false;
                                         return true;
                                     });
