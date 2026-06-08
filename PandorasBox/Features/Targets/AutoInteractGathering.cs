@@ -18,6 +18,15 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoInteractGathering : Feature
     {
+        // Throttle: only run expensive checks every 50ms (0.05 seconds)
+        private DateTime lastCheck = DateTime.MinValue;
+        private const double ThrottleIntervalMs = 50.0;
+
+        // Cached data for gathering points
+        private Dictionary<uint, uint> gatheringJobCache = new();          // BaseId -> job (0/1 Miner, 2/3 Botanist, 4/5 Fisher)
+        private Dictionary<uint, bool> isTimedUnspoiledCache = new();
+        private Dictionary<uint, bool> isTimedEphemeralCache = new();
+        private Dictionary<uint, (bool IsLegendary, string Folklore)> legendaryInfoCache = new(); // BaseId -> (IsLegendary, FolkloreBook)
 
         public override string Name => "Auto-interact with Gathering Nodes";
         public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
@@ -64,31 +73,63 @@ namespace PandorasBox.Features.Targets
 
         public Configs Config { get; private set; }
 
-        private Dictionary<uint, GatheringPoint> _gatheringPoints;
-        private Dictionary<uint, GatheringPointTransient> _gatheringTransients;
-        private string _landingMessageText;
-
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-
-            _gatheringPoints = Svc.Data.GetExcelSheet<GatheringPoint>()
-                .ToDictionary(x => x.RowId);
-            _gatheringTransients = Svc.Data.GetExcelSheet<GatheringPointTransient>()
-                .ToDictionary(x => x.RowId);
-
-            _landingMessageText = Svc.Data.GetExcelSheet<LogMessage>()
-                .FirstOrDefault(x => x.RowId == 7777).Text.ExtractText();
-
+            // Pre-cache all gathering point data on enable (one-time)
+            CacheGatheringPointData();
             Svc.Framework.Update += RunFeature;
             Svc.Condition.ConditionChange += TriggerCooldown;
             Svc.Toasts.ErrorToast += CheckIfLanding;
             base.Enable();
         }
 
+        private void CacheGatheringPointData()
+        {
+            var gatheringPointSheet = Svc.Data.GetExcelSheet<GatheringPoint>();
+            var gatheringPointTransientSheet = Svc.Data.GetExcelSheet<GatheringPointTransient>();
+            var gatheringSubCategorySheet = Svc.Data.GetExcelSheet<GatheringSubCategory>();
+            var gatheringTypeSheet = Svc.Data.GetExcelSheet<GatheringType>();
+
+            foreach (var point in gatheringPointSheet)
+            {
+                uint baseId = point.RowId;
+                // Job from GatheringType
+                var gatheringType = point.GatheringPointBase.Value?.GatheringType.Value;
+                if (gatheringType != null)
+                {
+                    gatheringJobCache[baseId] = gatheringType.RowId;
+                }
+
+                // Timed Unspoiled: rare pop time table exists and subcategory item is 0
+                var transient = gatheringPointTransientSheet.FirstOrDefault(t => t.RowId == baseId);
+                if (transient.RowId != 0 && transient.GatheringRarePopTimeTable.Value.RowId > 0)
+                {
+                    var subcategory = point.GatheringSubCategory.Value;
+                    if (subcategory.RowId != 0 && subcategory.Item.RowId == 0)
+                        isTimedUnspoiledCache[baseId] = true;
+                }
+
+                // Timed Ephemeral: EphemeralStartTime != 65535
+                if (transient.RowId != 0 && transient.EphemeralStartTime != 65535)
+                    isTimedEphemeralCache[baseId] = true;
+
+                // Legendary: rare pop time table + folklore book + subcategory item != 0
+                if (transient.RowId != 0 && transient.GatheringRarePopTimeTable.Value.RowId > 0)
+                {
+                    var subcategory = point.GatheringSubCategory.Value;
+                    if (subcategory.RowId != 0 && subcategory.Item.RowId != 0)
+                    {
+                        string folklore = subcategory.FolkloreBook.IsEmpty ? "" : subcategory.FolkloreBook.ToString();
+                        legendaryInfoCache[baseId] = (true, folklore);
+                    }
+                }
+            }
+        }
+
         private void CheckIfLanding(ref SeString message, ref bool isHandled)
         {
-            if (message.GetText() == _landingMessageText)
+            if (message.GetText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
             {
                 TaskManager.Abort();
                 TaskManager.EnqueueDelay(2000);
@@ -103,6 +144,11 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(IFramework framework)
         {
+            // Throttle: only run every ThrottleIntervalMs milliseconds
+            if ((DateTime.Now - lastCheck).TotalMilliseconds < ThrottleIntervalMs)
+                return;
+            lastCheck = DateTime.Now;
+
             if (Svc.Condition[ConditionFlag.Gathering] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent])
                 return;
 
@@ -122,7 +168,9 @@ namespace PandorasBox.Features.Targets
                 return;
 
             if (Config.ExcludeIsland && MJIManager.Instance()->IsPlayerInSanctuary)
+            {
                 return;
+            }
 
             if (nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary && MJIManager.Instance()->CurrentMode == 1)
             {
@@ -134,41 +182,37 @@ namespace PandorasBox.Features.Targets
                 return;
             }
 
-            if (!_gatheringPoints.TryGetValue(nearestNode.BaseId, out var gatheringPoint))
+            uint baseId = nearestNode.BaseId;
+
+            // Use cached job
+            if (!gatheringJobCache.TryGetValue(baseId, out uint job))
                 return;
 
-            var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
-            var targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
+            int targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
 
-            string Folklore = "";
-            if (gatheringPoint.GatheringSubCategory.IsValid && !gatheringPoint.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
-                Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.ToString();
+            // Exclude checks using cached data
+            if (Config.ExcludeTimedUnspoiled && isTimedUnspoiledCache.ContainsKey(baseId))
+                return;
+            if (Config.ExcludeTimedEphermeral && isTimedEphemeralCache.ContainsKey(baseId))
+                return;
+            if (Config.ExcludeTimedLegendary && legendaryInfoCache.TryGetValue(baseId, out var legendary) && legendary.IsLegendary)
+                return;
 
-            if (_gatheringTransients.TryGetValue(nearestNode.BaseId, out var transient))
-            {
-                if (Config.ExcludeTimedUnspoiled && transient.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0)
-                    return;
-                if (Config.ExcludeTimedEphermeral && transient.EphemeralStartTime != 65535)
-                    return;
-                if (Config.ExcludeTimedLegendary && transient.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0)
-                    return;
-            }
-
-            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeMiner && (job is 0 or 1) && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeBotanist && (job is 2 or 3) && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeFishing && (job is 4 or 5) && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
