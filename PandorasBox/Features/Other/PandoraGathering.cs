@@ -24,15 +24,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using Action = Lumina.Excel.Sheets.Action;
 
 namespace PandorasBox.Features.Other
 {
     public unsafe class PandoraGathering : Feature
     {
-        [DllImport("user32.dll")]
-        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
@@ -225,6 +222,7 @@ namespace PandorasBox.Features.Other
         private uint MaxIntegrity { get; set; } = 0;
         private int currentGatherCount = 0;
         private uint lastIntegrity = 0;
+        private bool limitReached = false;
 
         public override bool DrawConditions()
         {
@@ -249,6 +247,8 @@ namespace PandorasBox.Features.Other
 
         private void UpdateIntegrity(IFramework framework)
         {
+            if (limitReached) return;
+
             var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
             if (addon != null)
             {
@@ -260,11 +260,20 @@ namespace PandorasBox.Features.Other
                     currentGatherCount++;
                     if (currentGatherCount >= Config.GatherLimit)
                     {
-                        keybd_event(0x1B, 0, 0, UIntPtr.Zero);
-                        keybd_event(0x1B, 0, 0x0002, UIntPtr.Zero);
-                        ((AtkUnitBase*)addon)->Close(true);
-                        currentGatherCount = 0;
-                        lastIntegrity = 0;
+                        limitReached = true;
+                        TaskManager.Abort();
+                        TaskManager.EnqueueDelay(100);
+                        TaskManager.Enqueue(() =>
+                        {
+                            if (addon != null && addon->AtkUnitBase.IsVisible)
+                            {
+                                ECommons.Automation.Callback.Fire(&addon->AtkUnitBase, true, -1);
+                            }
+                            limitReached = false;
+                            currentGatherCount = 0;
+                            lastIntegrity = 0;
+                            return true;
+                        });
                         return;
                     }
                 }
@@ -553,6 +562,8 @@ namespace PandorasBox.Features.Other
 
         private void CheckNodeAndClick(int index)
         {
+            if (limitReached) return;
+
             try
             {
                 var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
@@ -585,7 +596,13 @@ namespace PandorasBox.Features.Other
                     {
                         if (Config.UseGatherLimit && currentGatherCount >= Config.GatherLimit)
                         {
-                            ((AtkUnitBase*)addon)->Close(true);
+                            if (!limitReached)
+                            {
+                                limitReached = true;
+                                TaskManager.Abort();
+                                ECommons.Automation.Callback.Fire(&addon->AtkUnitBase, true, -1);
+                                limitReached = false;
+                            }
                             return;
                         }
 
@@ -648,6 +665,7 @@ namespace PandorasBox.Features.Other
                 {
                     currentGatherCount = 0;
                     lastIntegrity = 0;
+                    limitReached = false;
                 }
 
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
@@ -759,7 +777,13 @@ namespace PandorasBox.Features.Other
 
                             if (Config.UseGatherLimit && currentGatherCount >= Config.GatherLimit)
                             {
-                                addon->AtkUnitBase.Close(true);
+                                if (!limitReached)
+                                {
+                                    limitReached = true;
+                                    TaskManager.Abort();
+                                    addon->AtkUnitBase.Close(true);
+                                    limitReached = false;
+                                }
                                 return;
                             }
 
