@@ -19,6 +19,7 @@ namespace PandorasBox.Features.Targets
     public unsafe class AutoInteractGathering : Feature
     {
         private DateTime lastInteraction = DateTime.Now;
+        private DateTime lastGatherEnd = DateTime.MinValue;
         private const double WatchdogSeconds = 10.0;
 
         public override string Name => "Auto-interact with Gathering Nodes";
@@ -87,12 +88,18 @@ namespace PandorasBox.Features.Targets
         private void TriggerCooldown(ConditionFlag flag, bool value)
         {
             if (flag == ConditionFlag.Gathering && !value)
-                TaskManager.EnqueueDelay((int)(Config.Cooldown * 1000));
+            {
+                lastGatherEnd = DateTime.Now;
+            }
         }
 
         private void RunFeature(IFramework framework)
         {
             if (!Enabled) return;
+
+            // Independent cooldown check (not affected by TaskManager)
+            if ((DateTime.Now - lastGatherEnd).TotalSeconds < Config.Cooldown)
+                return;
 
             if (TaskManager.IsBusy)
             {
