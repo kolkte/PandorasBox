@@ -85,36 +85,38 @@ namespace PandorasBox.Features.Targets
         {
             var gatheringPointSheet = Svc.Data.GetExcelSheet<GatheringPoint>();
             var gatheringPointTransientSheet = Svc.Data.GetExcelSheet<GatheringPointTransient>();
-            var gatheringSubCategorySheet = Svc.Data.GetExcelSheet<GatheringSubCategory>();
-            var gatheringTypeSheet = Svc.Data.GetExcelSheet<GatheringType>();
 
             foreach (var point in gatheringPointSheet)
             {
                 uint baseId = point.RowId;
-                var gatheringType = point.GatheringPointBase.Value?.GatheringType.Value;
-                if (gatheringType != null)
+                if (point.GatheringPointBase.IsValid)
                 {
-                    gatheringJobCache[baseId] = gatheringType.RowId;
+                    var gatheringType = point.GatheringPointBase.Value.GatheringType.Value;
+                    if (gatheringType.RowId != 0)
+                        gatheringJobCache[baseId] = gatheringType.RowId;
                 }
 
                 var transient = gatheringPointTransientSheet.FirstOrDefault(t => t.RowId == baseId);
-                if (transient.RowId != 0 && transient.GatheringRarePopTimeTable.Value.RowId > 0)
+                if (transient.RowId != 0)
                 {
-                    var subcategory = point.GatheringSubCategory.Value;
-                    if (subcategory.RowId != 0 && subcategory.Item.RowId == 0)
-                        isTimedUnspoiledCache[baseId] = true;
-                }
-
-                if (transient.RowId != 0 && transient.EphemeralStartTime != 65535)
-                    isTimedEphemeralCache[baseId] = true;
-
-                if (transient.RowId != 0 && transient.GatheringRarePopTimeTable.Value.RowId > 0)
-                {
-                    var subcategory = point.GatheringSubCategory.Value;
-                    if (subcategory.RowId != 0 && subcategory.Item.RowId != 0)
+                    if (transient.GatheringRarePopTimeTable.Value.RowId > 0)
                     {
-                        string folklore = subcategory.FolkloreBook.IsEmpty ? "" : subcategory.FolkloreBook.ToString();
-                        legendaryInfoCache[baseId] = (true, folklore);
+                        var subcategory = point.GatheringSubCategory.Value;
+                        if (subcategory.RowId != 0 && subcategory.Item.RowId == 0)
+                            isTimedUnspoiledCache[baseId] = true;
+                    }
+
+                    if (transient.EphemeralStartTime != 65535)
+                        isTimedEphemeralCache[baseId] = true;
+
+                    if (transient.GatheringRarePopTimeTable.Value.RowId > 0)
+                    {
+                        var subcategory = point.GatheringSubCategory.Value;
+                        if (subcategory.RowId != 0 && subcategory.Item.RowId != 0)
+                        {
+                            string folklore = subcategory.FolkloreBook.IsEmpty ? "" : subcategory.FolkloreBook.ToString();
+                            legendaryInfoCache[baseId] = (true, folklore);
+                        }
                     }
                 }
             }
@@ -132,7 +134,7 @@ namespace PandorasBox.Features.Targets
         private void TriggerCooldown(ConditionFlag flag, bool value)
         {
             if (flag == ConditionFlag.Gathering && !value)
-                TaskManager.EnqueueDelay((int)(Config.Cooldown * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Cooldown * 1000f));
         }
 
         private void RunFeature(IFramework framework)
@@ -168,7 +170,7 @@ namespace PandorasBox.Features.Targets
             {
                 if (!TaskManager.IsBusy)
                 {
-                    TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
+                    TaskManager.EnqueueDelay((int)(Config.Throttle * 1000f));
                     TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 }
                 return;
@@ -179,7 +181,7 @@ namespace PandorasBox.Features.Targets
             if (!gatheringJobCache.TryGetValue(baseId, out uint job))
                 return;
 
-            int targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
+            int targetGp = Math.Min(Config.RequiredGP, (int)Svc.Objects.LocalPlayer.MaxGp);
 
             if (Config.ExcludeTimedUnspoiled && isTimedUnspoiledCache.ContainsKey(baseId))
                 return;
@@ -190,22 +192,22 @@ namespace PandorasBox.Features.Targets
 
             if (!Config.ExcludeMiner && (job is 0 or 1) && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
-                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000f));
+                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); return true; });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeBotanist && (job is 2 or 3) && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
-                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000f));
+                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); return true; });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeFishing && (job is 4 or 5) && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
-                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000f));
+                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); return true; });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
