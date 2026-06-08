@@ -19,7 +19,6 @@ namespace PandorasBox.Features.Targets
     public unsafe class AutoInteractGathering : Feature
     {
         private DateTime lastInteraction = DateTime.Now;
-        private DateTime lastCheck = DateTime.Now;
         private const double WatchdogSeconds = 10.0;
 
         public override string Name => "Auto-interact with Gathering Nodes";
@@ -93,6 +92,8 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(IFramework framework)
         {
+            if (!Enabled) return;
+
             if (TaskManager.IsBusy)
             {
                 if ((DateTime.Now - lastInteraction).TotalSeconds > WatchdogSeconds)
@@ -130,6 +131,7 @@ namespace PandorasBox.Features.Targets
             {
                 if (!TaskManager.IsBusy)
                 {
+                    lastInteraction = DateTime.Now;
                     TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                     TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 }
@@ -152,7 +154,7 @@ namespace PandorasBox.Features.Targets
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
                 return;
 
-            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeMiner && (job is 0 or 1) && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 lastInteraction = DateTime.Now;
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
@@ -160,7 +162,7 @@ namespace PandorasBox.Features.Targets
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeBotanist && (job is 2 or 3) && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 lastInteraction = DateTime.Now;
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
@@ -168,7 +170,7 @@ namespace PandorasBox.Features.Targets
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeFishing && (job is 4 or 5) && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 lastInteraction = DateTime.Now;
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
@@ -176,7 +178,6 @@ namespace PandorasBox.Features.Targets
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-
         }
 
         public override void Disable()
