@@ -38,8 +38,6 @@ namespace PandorasBox.Features.Other
         private const byte VK_ESCAPE = 0x1B;
         private const uint KEYEVENTF_KEYUP = 0x0002;
 
-        private TaskManager PTaskManager = new();
-
         private void SendEscape()
         {
             keybd_event(VK_ESCAPE, 0, 0, UIntPtr.Zero);
@@ -53,10 +51,10 @@ namespace PandorasBox.Features.Other
                 if (attempt >= 30) return;
                 if (Svc.GameGui.GetAddonByName("Gathering") == nint.Zero) return;
                 SendEscape();
-                PTaskManager.EnqueueDelay(150);
-                PTaskManager.Enqueue(() => { SpamEscape(attempt + 1); return true; });
+                TaskManager.EnqueueDelay(150);
+                TaskManager.Enqueue(() => { SpamEscape(attempt + 1); return true; });
             }
-            PTaskManager.Enqueue(() => { SpamEscape(); return true; });
+            TaskManager.Enqueue(() => { SpamEscape(); return true; });
         }
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
@@ -289,9 +287,9 @@ namespace PandorasBox.Features.Other
                     if (currentGatherCount >= Config.GatherLimit)
                     {
                         limitReached = true;
-                        PTaskManager.Abort();
-                        PTaskManager.EnqueueDelay(200);
-                        PTaskManager.Enqueue(() =>
+                        // No Abort – let the task queue continue
+                        TaskManager.EnqueueDelay(200);
+                        TaskManager.Enqueue(() =>
                         {
                             CloseGatheringWithEscape();
                             limitReached = false;
@@ -317,8 +315,8 @@ namespace PandorasBox.Features.Other
         {
             if (handler.LogKind is (XivChatType)2107 && CurrentIntegrity == 0)
             {
-                PTaskManager.Abort();
-                PTaskManager.EnqueueDelay(1000);
+                // No Abort – just delay and retry
+                TaskManager.EnqueueDelay(1000);
                 AddonSetup(AddonEvent.PostSetup, null);
             }
         }
@@ -343,8 +341,6 @@ namespace PandorasBox.Features.Other
                 addon->GetNodeById(31)->ToggleVisibility(true);
             }
             Svc.Condition.ConditionChange -= ResetCounter;
-
-            PTaskManager?.Dispose();
 
             base.Disable();
         }
@@ -427,7 +423,7 @@ namespace PandorasBox.Features.Other
                         QuickGatherToggle(null);
 
                     if (!Config.Gathering)
-                        PTaskManager.Abort();
+                        TaskManager.Abort();
 
                     SaveConfig(Config);
                 }
@@ -614,7 +610,7 @@ namespace PandorasBox.Features.Other
 
                     if (item != lastGatheredItem && item != 0)
                     {
-                        PTaskManager.Abort();
+                        // No Abort – tasks will complete normally
                         lastGatheredIndex = (byte)index;
                         lastGatheredItem = item;
                     }
@@ -626,9 +622,8 @@ namespace PandorasBox.Features.Other
                             if (!limitReached)
                             {
                                 limitReached = true;
-                                PTaskManager.Abort();
-                                PTaskManager.EnqueueDelay(100);
-                                PTaskManager.Enqueue(() =>
+                                TaskManager.EnqueueDelay(100);
+                                TaskManager.Enqueue(() =>
                                 {
                                     CloseGatheringWithEscape();
                                     limitReached = false;
@@ -640,26 +635,26 @@ namespace PandorasBox.Features.Other
 
                         if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.RowId == 0))
                         {
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                            PTaskManager.Enqueue(() =>
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() =>
                             {
                                 var diffIntegrity = MaxIntegrity - CurrentIntegrity;
 
                                 if (Config.GPSolidReason <= Svc.Objects.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction() && diffIntegrity >= 2)
                                 {
-                                    PTaskManager.BeginStack();
-                                    PTaskManager.Enqueue(() => UseIntegrityAction());
-                                    PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                                    PTaskManager.Enqueue(() => UseWisdom());
-                                    PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                                    PTaskManager.InsertStack();
+                                    TaskManager.BeginStack();
+                                    TaskManager.Enqueue(() => UseIntegrityAction());
+                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                                    TaskManager.Enqueue(() => UseWisdom());
+                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                                    TaskManager.InsertStack();
                                 }
                             });
-                            PTaskManager.Enqueue(() =>
+                            TaskManager.Enqueue(() =>
                             {
                                 if (Config.GP100Yield <= Svc.Objects.LocalPlayer!.CurrentGp && Config.Use100GPYield)
                                 {
-                                    PTaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
+                                    TaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
                                 }
                             });
 
@@ -700,8 +695,8 @@ namespace PandorasBox.Features.Other
                     limitReached = false;
                 }
 
-                PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                PTaskManager.Enqueue(() =>
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                TaskManager.Enqueue(() =>
                 {
                     var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
 
@@ -742,9 +737,9 @@ namespace PandorasBox.Features.Other
 
                         if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.Objects.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed)
                         {
-                            PTaskManager.Enqueue(() => UseLuck(), "UseLuck");
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                            PTaskManager.Enqueue(() => AddonSetup(type, args));
+                            TaskManager.Enqueue(() => UseLuck(), "UseLuck");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() => AddonSetup(type, args));
                             HiddenRevealed = true;
                             return;
                         }
@@ -753,20 +748,20 @@ namespace PandorasBox.Features.Other
 
                         if (Config.GPTidings <= Svc.Objects.LocalPlayer!.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                         {
-                            PTaskManager.Enqueue(() => UseTidings(), "UseTidings");
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() => UseTidings(), "UseTidings");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GP500Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use500GPYield)
                         {
-                            PTaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GP100Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use100GPYield)
                         {
-                            PTaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GPGatherChanceUp <= Svc.Objects.LocalPlayer.CurrentGp && Config.GatherChanceUp)
@@ -776,14 +771,14 @@ namespace PandorasBox.Features.Other
 
                         if (Config.GPGivingLand <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseGivingLand)
                         {
-                            PTaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GPTwelvesBounty <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseTwelvesBounty)
                         {
-                            PTaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
-                            PTaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                     }
@@ -812,9 +807,8 @@ namespace PandorasBox.Features.Other
                                 if (!limitReached)
                                 {
                                     limitReached = true;
-                                    PTaskManager.Abort();
-                                    PTaskManager.EnqueueDelay(100);
-                                    PTaskManager.Enqueue(() =>
+                                    TaskManager.EnqueueDelay(100);
+                                    TaskManager.Enqueue(() =>
                                     {
                                         CloseGatheringWithEscape();
                                         limitReached = false;
@@ -836,7 +830,7 @@ namespace PandorasBox.Features.Other
         {
             if (flag == ConditionFlag.Gathering && !value)
             {
-                PTaskManager.Abort();
+                // No Abort – let the queue settle naturally
             }
         }
 
@@ -854,7 +848,7 @@ namespace PandorasBox.Features.Other
             if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
             {
                 if (!Config.Gathering)
-                    PTaskManager.Abort();
+                    TaskManager.Abort();
 
                 SaveConfig(Config);
             }
@@ -995,8 +989,8 @@ namespace PandorasBox.Features.Other
 
         private void ClickGather(uint index)
         {
-            PTaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-            PTaskManager.Enqueue(() =>
+            TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+            TaskManager.Enqueue(() =>
             {
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                 if (addon is null) return;
@@ -1097,14 +1091,14 @@ namespace PandorasBox.Features.Other
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4590) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4590);
-                        PTaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
+                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4589) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4589);
-                        PTaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
+                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
                     }
                     break;
             }
@@ -1120,14 +1114,14 @@ namespace PandorasBox.Features.Other
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 282) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 282);
-                        PTaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
+                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 280) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 280);
-                        PTaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
+                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
                     }
                     break;
             }
@@ -1146,24 +1140,24 @@ namespace PandorasBox.Features.Other
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 273);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
                     }
                     else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4087) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4087);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 272);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
                     }
                     else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4073) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4073);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
                     }
                     break;
             }
@@ -1187,24 +1181,24 @@ namespace PandorasBox.Features.Other
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 224) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 224);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
                     }
                     else
                     {
-                        PTaskManager.EnqueueDelay(200);
-                        PTaskManager.Enqueue(() => Use500GPSkill(retry + 1));
+                        TaskManager.EnqueueDelay(200);
+                        TaskManager.Enqueue(() => Use500GPSkill(retry + 1));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 241) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 241);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
                     }
                     else
                     {
-                        PTaskManager.EnqueueDelay(200);
-                        PTaskManager.Enqueue(() => Use500GPSkill(retry + 1));
+                        TaskManager.EnqueueDelay(200);
+                        TaskManager.Enqueue(() => Use500GPSkill(retry + 1));
                     }
                     break;
             }
@@ -1221,14 +1215,14 @@ namespace PandorasBox.Features.Other
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21204);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
                 case 16: //MIN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21203);
-                        PTaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
+                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
             }
