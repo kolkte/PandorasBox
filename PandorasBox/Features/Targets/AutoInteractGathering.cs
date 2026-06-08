@@ -64,7 +64,6 @@ namespace PandorasBox.Features.Targets
 
         public Configs Config { get; private set; }
 
-        // Cached Excel sheet lookups: built once on Enable() instead of scanning every frame
         private Dictionary<uint, GatheringPoint> _gatheringPoints;
         private Dictionary<uint, GatheringPointTransient> _gatheringTransients;
         private string _landingMessageText;
@@ -78,7 +77,6 @@ namespace PandorasBox.Features.Targets
             _gatheringTransients = Svc.Data.GetExcelSheet<GatheringPointTransient>()
                 .ToDictionary(x => x.RowId);
 
-            // Cache the landing error message text so CheckIfLanding doesn't scan the sheet on every toast
             _landingMessageText = Svc.Data.GetExcelSheet<LogMessage>()
                 .FirstOrDefault(x => x.RowId == 7777).Text.ExtractText();
 
@@ -136,7 +134,6 @@ namespace PandorasBox.Features.Targets
                 return;
             }
 
-            // Dictionary lookup: O(1) instead of a full sheet scan every frame
             if (!_gatheringPoints.TryGetValue(nearestNode.BaseId, out var gatheringPoint))
                 return;
 
@@ -147,7 +144,6 @@ namespace PandorasBox.Features.Targets
             if (gatheringPoint.GatheringSubCategory.IsValid && !gatheringPoint.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
                 Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.ToString();
 
-            // Single transient lookup: replaces three separate full-sheet .Any() scans
             if (_gatheringTransients.TryGetValue(nearestNode.BaseId, out var transient))
             {
                 if (Config.ExcludeTimedUnspoiled && transient.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0)
