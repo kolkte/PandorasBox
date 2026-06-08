@@ -657,7 +657,8 @@ namespace PandorasBox.Features.Other
                                     TaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
                                     TaskManager.EnqueueDelay(300);
                                 }
-                                ClickGather(lastGatheredIndex);
+                                // Enqueue the gather so it runs after the skills
+                                TaskManager.Enqueue(() => ClickGather(lastGatheredIndex));
                             });
                         }
                     }
@@ -820,7 +821,10 @@ namespace PandorasBox.Features.Other
                             }
 
                             if (integrityLeft > 1)
-                                ClickGather(lastGatheredIndex);
+                            {
+                                // Ensure the gather is enqueued after any pending skills
+                                TaskManager.Enqueue(() => ClickGather(lastGatheredIndex));
+                            }
                         }
                     }
                 });
