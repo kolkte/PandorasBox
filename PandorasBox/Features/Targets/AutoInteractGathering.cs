@@ -64,9 +64,24 @@ namespace PandorasBox.Features.Targets
 
         public Configs Config { get; private set; }
 
+        // Cached Excel sheet lookups: built once on Enable() instead of scanning every frame
+        private Dictionary<uint, GatheringPoint> _gatheringPoints;
+        private Dictionary<uint, GatheringPointTransient> _gatheringTransients;
+        private string _landingMessageText;
+
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
+
+            _gatheringPoints = Svc.Data.GetExcelSheet<GatheringPoint>()
+                .ToDictionary(x => x.RowId);
+            _gatheringTransients = Svc.Data.GetExcelSheet<GatheringPointTransient>()
+                .ToDictionary(x => x.RowId);
+
+            // Cache the landing error message text so CheckIfLanding doesn't scan the sheet on every toast
+            _landingMessageText = Svc.Data.GetExcelSheet<LogMessage>()
+                .FirstOrDefault(x => x.RowId == 7777).Text.ExtractText();
+
             Svc.Framework.Update += RunFeature;
             Svc.Condition.ConditionChange += TriggerCooldown;
             Svc.Toasts.ErrorToast += CheckIfLanding;
@@ -75,7 +90,7 @@ namespace PandorasBox.Features.Targets
 
         private void CheckIfLanding(ref SeString message, ref bool isHandled)
         {
-            if (message.GetText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
+            if (message.GetText() == _landingMessageText)
             {
                 TaskManager.Abort();
                 TaskManager.EnqueueDelay(2000);
@@ -109,9 +124,7 @@ namespace PandorasBox.Features.Targets
                 return;
 
             if (Config.ExcludeIsland && MJIManager.Instance()->IsPlayerInSanctuary)
-            {
                 return;
-            }
 
             if (nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary && MJIManager.Instance()->CurrentMode == 1)
             {
@@ -123,21 +136,27 @@ namespace PandorasBox.Features.Targets
                 return;
             }
 
-            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
+            // Dictionary lookup: O(1) instead of a full sheet scan every frame
+            if (!_gatheringPoints.TryGetValue(nearestNode.BaseId, out var gatheringPoint))
+                return;
+
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
 
             string Folklore = "";
-
             if (gatheringPoint.GatheringSubCategory.IsValid && !gatheringPoint.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
                 Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.ToString();
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0) && Config.ExcludeTimedUnspoiled)
-                return;
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
-                return;
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
-                return;
+            // Single transient lookup: replaces three separate full-sheet .Any() scans
+            if (_gatheringTransients.TryGetValue(nearestNode.BaseId, out var transient))
+            {
+                if (Config.ExcludeTimedUnspoiled && transient.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0)
+                    return;
+                if (Config.ExcludeTimedEphermeral && transient.EphemeralStartTime != 65535)
+                    return;
+                if (Config.ExcludeTimedLegendary && transient.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0)
+                    return;
+            }
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
@@ -160,7 +179,6 @@ namespace PandorasBox.Features.Targets
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-
         }
 
         public override void Disable()

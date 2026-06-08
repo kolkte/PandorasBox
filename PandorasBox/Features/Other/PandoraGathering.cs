@@ -33,42 +33,42 @@ namespace PandorasBox.Features.Other
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
-            (4785, 7715), // Paprika          
-            (4777, 7716), // Wild Onion       
-            (4778, 7717), // Coerthan Carrot  
+            (4785, 7715), // Paprika
+            (4777, 7716), // Wild Onion
+            (4778, 7717), // Coerthan Carrot
             (4782, 7718), // La Noscean Lettuce
-            (4804, 7719), // Cinderfoot Olive 
-            (4787, 7720), // Popoto           
-            (4821, 7721), // Millioncorn      
-            (4788, 7722), // Wizard Eggplant  
-            (4789, 7723), // Midland Cabbage  
+            (4804, 7719), // Cinderfoot Olive
+            (4787, 7720), // Popoto
+            (4821, 7721), // Millioncorn
+            (4788, 7722), // Wizard Eggplant
+            (4789, 7723), // Midland Cabbage
             (4809, 7725), // La Noscean Orange
-            (4808, 7726), // Lowland Grapes   
-            (4810, 7727), // Faerie Apple     
-            (4811, 7728), // Sun Lemon        
-            (4812, 7729), // Pixie Plums      
-            (4814, 7730), // Blood Currants   
-            (6146, 7731), // Mirror Apple     
-            (4815, 7732), // Rolanberry       
-            (4829, 7735), // Garlean Garlic   
-            (5539, 7736), // Lavender         
-            (4830, 7737), // Black Pepper     
+            (4808, 7726), // Lowland Grapes
+            (4810, 7727), // Faerie Apple
+            (4811, 7728), // Sun Lemon
+            (4812, 7729), // Pixie Plums
+            (4814, 7730), // Blood Currants
+            (6146, 7731), // Mirror Apple
+            (4815, 7732), // Rolanberry
+            (4829, 7735), // Garlean Garlic
+            (5539, 7736), // Lavender
+            (4830, 7737), // Black Pepper
             (4835, 7738), // Ala Mhigan Mustard
-            (4836, 7739), // Pearl Ginger     
-            (5542, 7740), // Chamomile        
-            (5346, 7741), // Flax         
+            (4836, 7739), // Pearl Ginger
+            (5542, 7740), // Chamomile
+            (5346, 7741), // Flax
             (4837, 7742), // Midland Basil
-            (5543, 7743), // Mandrake     
+            (5543, 7743), // Mandrake
             (4842, 7744), // Almonds
 
-            (29669, 29670), // Oddly Specific Latex                 
-            (29671, 29672), // Oddly Specific Obsidian              
-            (29674, 29675), // Oddly Specific Amber                 
-            (29676, 29677), // Oddly Specific Dark Matter           
-            (31125, 31126), // Oddly Specific Leafborne Aethersand  
-            (31130, 31131), // Oddly Specific Primordial Resin      
-            (31127, 31128), // Oddly Specific Landborne Aethersand  
-            (31132, 31133), // Oddly Specific Primordial Asphaltum  
+            (29669, 29670), // Oddly Specific Latex
+            (29671, 29672), // Oddly Specific Obsidian
+            (29674, 29675), // Oddly Specific Amber
+            (29676, 29677), // Oddly Specific Dark Matter
+            (31125, 31126), // Oddly Specific Leafborne Aethersand
+            (31130, 31131), // Oddly Specific Primordial Resin
+            (31127, 31128), // Oddly Specific Landborne Aethersand
+            (31132, 31133), // Oddly Specific Primordial Asphaltum
 
             (38788, 38789), // Splendorous Earth Shard
             (38790, 38791), // Splendorous Water Shard
@@ -84,26 +84,26 @@ namespace PandorasBox.Features.Other
         public static readonly (uint ItemId, uint NodeId)[] Items =
         {
             (7758, 203),  // Grade 1 La Noscean Topsoil
-            (7761, 200),  // Grade 1 Shroud Topsoil   
-            (7764, 201),  // Grade 1 Thanalan Topsoil 
+            (7761, 200),  // Grade 1 Shroud Topsoil
+            (7764, 201),  // Grade 1 Thanalan Topsoil
             (7759, 150),  // Grade 2 La Noscean Topsoil
-            (7762, 209),  // Grade 2 Shroud Topsoil   
-            (7765, 151),  // Grade 2 Thanalan Topsoil 
-            (10092, 210), // Black Limestone          
-            (10094, 177), // Little Worm              
-            (10097, 133), // Yafaemi Wildgrass        
-            (12893, 295), // Dark Chestnut            
-            (15865, 30),  // Firelight Seeds          
-            (15866, 39),  // Icelight Seeds           
-            (15867, 21),  // Windlight Seeds          
-            (15868, 31),  // Earthlight Seeds         
-            (15869, 25),  // Levinlight Seeds         
+            (7762, 209),  // Grade 2 Shroud Topsoil
+            (7765, 151),  // Grade 2 Thanalan Topsoil
+            (10092, 210), // Black Limestone
+            (10094, 177), // Little Worm
+            (10097, 133), // Yafaemi Wildgrass
+            (12893, 295), // Dark Chestnut
+            (15865, 30),  // Firelight Seeds
+            (15866, 39),  // Icelight Seeds
+            (15867, 21),  // Windlight Seeds
+            (15868, 31),  // Earthlight Seeds
+            (15869, 25),  // Levinlight Seeds
             (15870, 14),  // Waterlight Seeds
-            (12534, 285), // Mythrite Ore             
-            (12535, 353), // Hardsilver Ore           
-            (12537, 286), // Titanium Ore             
-            (12579, 356), // Birch Log                
-            (12878, 297), // Cyclops Onion            
+            (12534, 285), // Mythrite Ore
+            (12535, 353), // Hardsilver Ore
+            (12537, 286), // Titanium Ore
+            (12579, 356), // Birch Log
+            (12878, 297), // Cyclops Onion
             (12879, 298), // Emerald Beans
             (39806, 920), // Custom Ice Crystal
             (39808, 930), // Custom Wind Crystal
@@ -298,6 +298,13 @@ namespace PandorasBox.Features.Other
                 if (!addon->IsVisible) return;
 
                 var node = addon->GetNodeById(31);
+                var node33 = addon->GetNodeById(33);
+                var node34 = addon->GetNodeById(34);
+                var node35 = addon->GetNodeById(35);
+                var node37 = addon->GetNodeById(37);
+                var node38 = addon->GetNodeById(38);
+
+                if (node == null || node33 == null || node34 == null || node35 == null || node37 == null || node38 == null) return;
 
                 if (node->IsVisible())
                     node->ToggleVisibility(false);
@@ -311,13 +318,13 @@ namespace PandorasBox.Features.Other
                 var theme = TransparentTheme;
                 var isLightTheme = color is 1 or 4 or 7;
 
-                addon->GetNodeById(38)->ToggleVisibility(false);
-                addon->GetNodeById(37)->ToggleVisibility(false);
-                addon->GetNodeById(33)->ToggleVisibility(false);
-                addon->GetNodeById(34)->ToggleVisibility(false);
+                node38->ToggleVisibility(false);
+                node37->ToggleVisibility(false);
+                node33->ToggleVisibility(false);
+                node34->ToggleVisibility(false);
 
-                LocationEffect = addon->GetNodeById(34)->GetAsAtkTextNode()->NodeText.GetText();
-                LocationEffect2 = addon->GetNodeById(35)->GetAsAtkTextNode()->NodeText.GetText();
+                LocationEffect = node34->GetAsAtkTextNode()->NodeText.GetText();
+                LocationEffect2 = node35->GetAsAtkTextNode()->NodeText.GetText();
                 if (isLightTheme)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
