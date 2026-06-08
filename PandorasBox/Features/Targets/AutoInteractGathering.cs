@@ -18,11 +18,6 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoInteractGathering : Feature
     {
-        // --- Caching fields added ---
-        private Dictionary<uint, uint> cachedJob = new();
-        private Dictionary<uint, (uint SubCatId, string Folklore)> cachedSubCat = new();
-        private Dictionary<uint, (bool HasRarePop, bool IsEphemeral, bool IsUnspoiled, bool IsLegendary)> cachedTransient = new();
-        // ----------------------------
 
         public override string Name => "Auto-interact with Gathering Nodes";
         public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
@@ -72,55 +67,10 @@ namespace PandorasBox.Features.Targets
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            // --- Build caches once ---
-            CacheGatheringData();
-            // -------------------------
             Svc.Framework.Update += RunFeature;
             Svc.Condition.ConditionChange += TriggerCooldown;
             Svc.Toasts.ErrorToast += CheckIfLanding;
             base.Enable();
-        }
-
-        // --- New caching method ---
-        private void CacheGatheringData()
-        {
-            var gpSheet = Svc.Data.GetExcelSheet<GatheringPoint>();
-            var transSheet = Svc.Data.GetExcelSheet<GatheringPointTransient>();
-            foreach (var point in gpSheet)
-            {
-                uint id = point.RowId;
-                // job
-                if (point.GatheringPointBase.IsValid)
-                {
-                    var gt = point.GatheringPointBase.Value.GatheringType.Value;
-                    if (gt.RowId != 0) cachedJob[id] = gt.RowId;
-                }
-                // subcategory & folklore
-                if (point.GatheringSubCategory.IsValid)
-                {
-                    var sub = point.GatheringSubCategory.Value;
-                    string folk = sub.FolkloreBook.IsEmpty ? "" : sub.FolkloreBook.ToString();
-                    cachedSubCat[id] = (sub.RowId, folk);
-                }
-                else
-                {
-                    cachedSubCat[id] = (0, "");
-                }
-                // transient
-                var trans = transSheet.FirstOrDefault(t => t.RowId == id);
-                if (trans.RowId != 0)
-                {
-                    bool hasRare = trans.GatheringRarePopTimeTable.Value.RowId > 0;
-                    bool ephemeral = trans.EphemeralStartTime != 65535;
-                    bool unspoiled = hasRare && cachedSubCat.TryGetValue(id, out var sc) && sc.SubCatId != 0 && sc.Folklore == "";
-                    bool legendary = hasRare && cachedSubCat.TryGetValue(id, out var sc2) && sc2.SubCatId != 0 && sc2.Folklore != "";
-                    cachedTransient[id] = (hasRare, ephemeral, unspoiled, legendary);
-                }
-                else
-                {
-                    cachedTransient[id] = (false, false, false, false);
-                }
-            }
         }
 
         private void CheckIfLanding(ref SeString message, ref bool isHandled)
@@ -173,62 +123,37 @@ namespace PandorasBox.Features.Targets
                 return;
             }
 
-            uint baseId = nearestNode.BaseId;
-
-            // --- Use cached job, fallback to Excel if missing ---
-            if (!cachedJob.TryGetValue(baseId, out uint job))
-            {
-                var gp = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
-                job = gp.GatheringPointBase.Value.GatheringType.Value.RowId;
-            }
-
+            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
+            var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
 
-            // --- Use cached folklore, fallback ---
             string Folklore = "";
-            if (cachedSubCat.TryGetValue(baseId, out var subCatData))
-                Folklore = subCatData.Folklore;
-            else
-            {
-                var gp = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
-                if (gp.GatheringSubCategory.IsValid && !gp.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
-                    Folklore = gp.GatheringSubCategory.Value.FolkloreBook.ToString();
-            }
 
-            // --- Use cached transient info, fallback ---
-            if (!cachedTransient.TryGetValue(baseId, out var trans))
-            {
-                var gp = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
-                var tr = Svc.Data.GetExcelSheet<GatheringPointTransient>().FirstOrDefault(x => x.RowId == nearestNode.BaseId);
-                bool hasRare = tr.RowId != 0 && tr.GatheringRarePopTimeTable.Value.RowId > 0;
-                bool ephemeral = tr.RowId != 0 && tr.EphemeralStartTime != 65535;
-                bool unspoiled = hasRare && gp.GatheringSubCategory.IsValid && gp.GatheringSubCategory.Value.Item.RowId == 0;
-                bool legendary = hasRare && gp.GatheringSubCategory.IsValid && gp.GatheringSubCategory.Value.Item.RowId != 0 && Folklore.Length > 0;
-                trans = (hasRare, ephemeral, unspoiled, legendary);
-            }
+            if (gatheringPoint.GatheringSubCategory.IsValid && !gatheringPoint.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
+                Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.ToString();
 
-            if (Config.ExcludeTimedUnspoiled && trans.IsUnspoiled)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0) && Config.ExcludeTimedUnspoiled)
                 return;
-            if (Config.ExcludeTimedEphermeral && trans.IsEphemeral)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
                 return;
-            if (Config.ExcludeTimedLegendary && trans.IsLegendary && Folklore.Length > 0)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
                 return;
 
-            if (!Config.ExcludeMiner && (job is 0 or 1) && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeBotanist && (job is 2 or 3) && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeFishing && (job is 4 or 5) && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
