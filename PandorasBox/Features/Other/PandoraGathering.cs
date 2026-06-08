@@ -24,12 +24,37 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Action = Lumina.Excel.Sheets.Action;
 
 namespace PandorasBox.Features.Other
 {
     public unsafe class PandoraGathering : Feature
     {
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
+        private const byte VK_ESCAPE = 0x1B;
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+
+        private void SendEscape()
+        {
+            keybd_event(VK_ESCAPE, 0, 0, UIntPtr.Zero);
+            keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        }
+
+        private void CloseGatheringWithEscape()
+        {
+            void SpamEscape(int attempt = 0)
+            {
+                if (attempt >= 30) return;
+                if (Svc.GameGui.GetAddonByName("Gathering") == nint.Zero) return;
+                SendEscape();
+                TaskManager.EnqueueDelay(150);
+                TaskManager.Enqueue(() => { SpamEscape(attempt + 1); return true; });
+            }
+            TaskManager.Enqueue(() => { SpamEscape(); return true; });
+        }
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
@@ -265,11 +290,7 @@ namespace PandorasBox.Features.Other
                         TaskManager.EnqueueDelay(200);
                         TaskManager.Enqueue(() =>
                         {
-                            var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                            if (closeAddon != null && closeAddon->IsVisible)
-                            {
-                                closeAddon->Close(true);
-                            }
+                            CloseGatheringWithEscape();
                             limitReached = false;
                             currentGatherCount = 0;
                             lastIntegrity = 0;
@@ -604,11 +625,7 @@ namespace PandorasBox.Features.Other
                                 TaskManager.EnqueueDelay(100);
                                 TaskManager.Enqueue(() =>
                                 {
-                                    var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                                    if (closeAddon != null && closeAddon->IsVisible)
-                                    {
-                                        closeAddon->Close(true);
-                                    }
+                                    CloseGatheringWithEscape();
                                     limitReached = false;
                                     return true;
                                 });
@@ -739,7 +756,6 @@ namespace PandorasBox.Features.Other
                         {
                             TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                            TaskManager.EnqueueDelay(300);
                         }
 
                         if (Config.GP100Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use100GPYield)
@@ -795,11 +811,7 @@ namespace PandorasBox.Features.Other
                                     TaskManager.EnqueueDelay(100);
                                     TaskManager.Enqueue(() =>
                                     {
-                                        var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                                        if (closeAddon != null && closeAddon->IsVisible)
-                                        {
-                                            closeAddon->Close(true);
-                                        }
+                                        CloseGatheringWithEscape();
                                         limitReached = false;
                                         return true;
                                     });
@@ -1028,7 +1040,6 @@ namespace PandorasBox.Features.Other
             if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
             if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
 
-
             return false;
         }
 
@@ -1155,6 +1166,13 @@ namespace PandorasBox.Features.Other
 
         private void Use500GPSkill()
         {
+            Use500GPSkill(0);
+        }
+
+        private void Use500GPSkill(int retry)
+        {
+            if (retry >= 5) return;
+
             if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 219))
                 return;
 
@@ -1169,7 +1187,7 @@ namespace PandorasBox.Features.Other
                     else
                     {
                         TaskManager.EnqueueDelay(200);
-                        TaskManager.Enqueue(() => Use500GPSkill());
+                        TaskManager.Enqueue(() => Use500GPSkill(retry + 1));
                     }
                     break;
                 case 16:
@@ -1181,7 +1199,7 @@ namespace PandorasBox.Features.Other
                     else
                     {
                         TaskManager.EnqueueDelay(200);
-                        TaskManager.Enqueue(() => Use500GPSkill());
+                        TaskManager.Enqueue(() => Use500GPSkill(retry + 1));
                     }
                     break;
             }
