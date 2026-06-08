@@ -655,11 +655,10 @@ namespace PandorasBox.Features.Other
                                 if (Config.GP100Yield <= Svc.Objects.LocalPlayer!.CurrentGp && Config.Use100GPYield)
                                 {
                                     TaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
+                                    TaskManager.EnqueueDelay(300);
                                 }
+                                ClickGather(lastGatheredIndex);
                             });
-
-                            ClickGather(lastGatheredIndex);
-
                         }
                     }
 
@@ -756,6 +755,7 @@ namespace PandorasBox.Features.Other
                         {
                             TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                            TaskManager.EnqueueDelay(300);
                         }
 
                         if (Config.GP100Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use100GPYield)
@@ -1144,7 +1144,7 @@ namespace PandorasBox.Features.Other
 
             switch (chara.ClassJob.RowId)
             {
-                case 17: // Botanist
+                case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 273);
@@ -1161,7 +1161,7 @@ namespace PandorasBox.Features.Other
                         TaskManager.Enqueue(() => Use100GPSkill(retry + 1));
                     }
                     break;
-                case 16: // Miner
+                case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 272);
@@ -1276,7 +1276,5 @@ namespace PandorasBox.Features.Other
 
             return true;
         }
-
-
     }
 }
