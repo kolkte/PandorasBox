@@ -988,7 +988,7 @@ namespace PandorasBox.Features.Other
             }
         };
 
-        private void Cli§kGather(uint index)
+        private void ClickGather(uint index)
         {
             TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
             TaskManager.Enqueue(() =>
