@@ -20,6 +20,8 @@ namespace PandorasBox.Features.Targets
     {
         private DateTime lastInteraction = DateTime.Now;
         private const double WatchdogSeconds = 10.0;
+        private DateTime lastGatherEnd = DateTime.MinValue;   // cooldown timer
+        private bool wasGatheringAddonVisible = false;        // track addon visibility
 
         public override string Name => "Auto-interact with Gathering Nodes";
         public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
@@ -86,13 +88,28 @@ namespace PandorasBox.Features.Targets
 
         private void TriggerCooldown(ConditionFlag flag, bool value)
         {
+            // Keep this for safety, but main cooldown is now based on addon visibility
             if (flag == ConditionFlag.Gathering && !value)
-                TaskManager.EnqueueDelay((int)(Config.Cooldown * 1000));
+            {
+                lastGatherEnd = DateTime.Now;
+            }
         }
 
         private void RunFeature(IFramework framework)
         {
             if (!Enabled) return;
+
+            // Detect when the Gathering addon disappears (window closed)
+            bool isGatheringAddonVisible = Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
+            if (wasGatheringAddonVisible && !isGatheringAddonVisible)
+            {
+                lastGatherEnd = DateTime.Now;   // start cooldown
+            }
+            wasGatheringAddonVisible = isGatheringAddonVisible;
+
+            // Cooldown check – independent of TaskManager
+            if ((DateTime.Now - lastGatherEnd).TotalSeconds < Config.Cooldown)
+                return;
 
             if (TaskManager.IsBusy)
             {
