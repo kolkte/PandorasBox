@@ -1132,12 +1132,19 @@ namespace PandorasBox.Features.Other
 
         private void Use100GPSkill()
         {
+            Use100GPSkill(0);
+        }
+
+        private void Use100GPSkill(int retry)
+        {
+            if (retry >= 5) return;
+
             if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 1286 || x.StatusId == 756))
                 return;
 
             switch (chara.ClassJob.RowId)
             {
-                case 17:
+                case 17: // Botanist
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 273);
@@ -1148,8 +1155,13 @@ namespace PandorasBox.Features.Other
                         ActionManager.Instance()->UseAction(ActionType.Action, 4087);
                         TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
                     }
+                    else
+                    {
+                        TaskManager.EnqueueDelay(200);
+                        TaskManager.Enqueue(() => Use100GPSkill(retry + 1));
+                    }
                     break;
-                case 16:
+                case 16: // Miner
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 272);
@@ -1159,6 +1171,11 @@ namespace PandorasBox.Features.Other
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4073);
                         TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
+                    }
+                    else
+                    {
+                        TaskManager.EnqueueDelay(200);
+                        TaskManager.Enqueue(() => Use100GPSkill(retry + 1));
                     }
                     break;
             }
