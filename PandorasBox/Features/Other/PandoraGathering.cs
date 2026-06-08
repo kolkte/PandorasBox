@@ -33,109 +33,106 @@ namespace PandorasBox.Features.Other
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
-            (4785, 7715), // Paprika
-            (4777, 7716), // Wild Onion
-            (4778, 7717), // Coerthan Carrot
-            (4782, 7718), // La Noscean Lettuce
-            (4804, 7719), // Cinderfoot Olive
-            (4787, 7720), // Popoto
-            (4821, 7721), // Millioncorn
-            (4788, 7722), // Wizard Eggplant
-            (4789, 7723), // Midland Cabbage
-            (4809, 7725), // La Noscean Orange
-            (4808, 7726), // Lowland Grapes
-            (4810, 7727), // Faerie Apple
-            (4811, 7728), // Sun Lemon
-            (4812, 7729), // Pixie Plums
-            (4814, 7730), // Blood Currants
-            (6146, 7731), // Mirror Apple
-            (4815, 7732), // Rolanberry
-            (4829, 7735), // Garlean Garlic
-            (5539, 7736), // Lavender
-            (4830, 7737), // Black Pepper
-            (4835, 7738), // Ala Mhigan Mustard
-            (4836, 7739), // Pearl Ginger
-            (5542, 7740), // Chamomile
-            (5346, 7741), // Flax
-            (4837, 7742), // Midland Basil
-            (5543, 7743), // Mandrake
-            (4842, 7744), // Almonds
-
-            (29669, 29670), // Oddly Specific Latex
-            (29671, 29672), // Oddly Specific Obsidian
-            (29674, 29675), // Oddly Specific Amber
-            (29676, 29677), // Oddly Specific Dark Matter
-            (31125, 31126), // Oddly Specific Leafborne Aethersand
-            (31130, 31131), // Oddly Specific Primordial Resin
-            (31127, 31128), // Oddly Specific Landborne Aethersand
-            (31132, 31133), // Oddly Specific Primordial Asphaltum
-
-            (38788, 38789), // Splendorous Earth Shard
-            (38790, 38791), // Splendorous Water Shard
-            (38794, 38795), // Splendorous Lightning Shard
-            (38796, 38797), // Splendorous Fire Shard
-
-            (39805, 39806), // Custom Ice Crystal
-            (39807, 39808), // Custom Wind Crystal
-            (39811, 39812), // Brilliant Lightning Cluster
-            (39813, 39814), // Brilliant Earth Cluster
+            (4785, 7715),
+            (4777, 7716),
+            (4778, 7717),
+            (4782, 7718),
+            (4804, 7719),
+            (4787, 7720),
+            (4821, 7721),
+            (4788, 7722),
+            (4789, 7723),
+            (4809, 7725),
+            (4808, 7726),
+            (4810, 7727),
+            (4811, 7728),
+            (4812, 7729),
+            (4814, 7730),
+            (6146, 7731),
+            (4815, 7732),
+            (4829, 7735),
+            (5539, 7736),
+            (4830, 7737),
+            (4835, 7738),
+            (4836, 7739),
+            (5542, 7740),
+            (5346, 7741),
+            (4837, 7742),
+            (5543, 7743),
+            (4842, 7744),
+            (29669, 29670),
+            (29671, 29672),
+            (29674, 29675),
+            (29676, 29677),
+            (31125, 31126),
+            (31130, 31131),
+            (31127, 31128),
+            (31132, 31133),
+            (38788, 38789),
+            (38790, 38791),
+            (38794, 38795),
+            (38796, 38797),
+            (39805, 39806),
+            (39807, 39808),
+            (39811, 39812),
+            (39813, 39814),
         };
 
         public static readonly (uint ItemId, uint NodeId)[] Items =
         {
-            (7758, 203),  // Grade 1 La Noscean Topsoil
-            (7761, 200),  // Grade 1 Shroud Topsoil
-            (7764, 201),  // Grade 1 Thanalan Topsoil
-            (7759, 150),  // Grade 2 La Noscean Topsoil
-            (7762, 209),  // Grade 2 Shroud Topsoil
-            (7765, 151),  // Grade 2 Thanalan Topsoil
-            (10092, 210), // Black Limestone
-            (10094, 177), // Little Worm
-            (10097, 133), // Yafaemi Wildgrass
-            (12893, 295), // Dark Chestnut
-            (15865, 30),  // Firelight Seeds
-            (15866, 39),  // Icelight Seeds
-            (15867, 21),  // Windlight Seeds
-            (15868, 31),  // Earthlight Seeds
-            (15869, 25),  // Levinlight Seeds
-            (15870, 14),  // Waterlight Seeds
-            (12534, 285), // Mythrite Ore
-            (12535, 353), // Hardsilver Ore
-            (12537, 286), // Titanium Ore
-            (12579, 356), // Birch Log
-            (12878, 297), // Cyclops Onion
-            (12879, 298), // Emerald Beans
-            (39806, 920), // Custom Ice Crystal
-            (39808, 930), // Custom Wind Crystal
-            (38791, 924), // Splendorous Water Shard
-            (38789, 926), // Splendorous Earth Shard
-            (38795, 923), // Adaptive Lightning Crystal
-            (38797, 925), // Adaptive Fire Crystal
-            (39812, 929), // Brilliant Lightning Cluster
-            (39814, 931), // Brilliant Earth Cluster
-            (41287, 938), // Inspirational Wind Cluster
-            (41289, 940), // Inspirational Fire Cluster
-            (41291, 939), // Nightforged Ice Cluster
-            (41293, 941), // Nightforged Water Cluster
+            (7758, 203),
+            (7761, 200),
+            (7764, 201),
+            (7759, 150),
+            (7762, 209),
+            (7765, 151),
+            (10092, 210),
+            (10094, 177),
+            (10097, 133),
+            (12893, 295),
+            (15865, 30),
+            (15866, 39),
+            (15867, 21),
+            (15868, 31),
+            (15869, 25),
+            (15870, 14),
+            (12534, 285),
+            (12535, 353),
+            (12537, 286),
+            (12579, 356),
+            (12878, 297),
+            (12879, 298),
+            (39806, 920),
+            (39808, 930),
+            (38791, 924),
+            (38789, 926),
+            (38795, 923),
+            (38797, 925),
+            (39812, 929),
+            (39814, 931),
+            (41287, 938),
+            (41289, 940),
+            (41291, 939),
+            (41293, 941),
         };
 
         public static readonly (uint MapId, uint[] NodeIds)[] Maps =
         {
-            (6688,  new uint[]{20, 49, 137, 140, 141, 180}),                                 // Leather
-            (6689,  new uint[]{46, 142, 143, 185, 186}),                                     // Goatskin
-            (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Toadskin
-            (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Boarskin
-            (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Peisteskin
-            (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),                     // Archaeoskin
-            (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Wyvernskin
-            (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Dragonskin
-            (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gaganaskin
-            (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gazelleskin
-            (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Gliderskin
-            (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Zonureskin
-            (36611, new uint[]{847, 848, 825, 826}),                                         // Saigaskin
-            (36612, new uint[]{847, 848, 825, 826}),                                         // Kumbhiraskin
-            (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
+            (6688,  new uint[]{20, 49, 137, 140, 141, 180}),
+            (6689,  new uint[]{46, 142, 143, 185, 186}),
+            (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}),
+            (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}),
+            (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}),
+            (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),
+            (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}),
+            (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}),
+            (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),
+            (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),
+            (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),
+            (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),
+            (36611, new uint[]{847, 848, 825, 826}),
+            (36612, new uint[]{847, 848, 825, 826}),
+            (39591, new uint[]{846, 844, 824, 823}),
          };
 
         private Hook<AddonGathering.Delegates.NotifyQuickGatherState> quickGatherToggle = null!;
@@ -147,80 +144,54 @@ namespace PandorasBox.Features.Other
         internal Vector4 TransparentTheme = new Vector4(0, 0, 0, 0);
 
         public override string Name => "Pandora Quick Gather";
-
         public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
 
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
         private string? LocationEffect;
         private string? LocationEffect2;
-
         private bool HiddenRevealed = false;
 
         public class Configs : FeatureConfig
         {
             public bool CollectibleStop = false;
-
             public bool ShiftStop = false;
-
             public bool Gathering = false;
-
             public bool RememberLastNode = false;
-
             public bool DontBuffIfItemNotPresent = false;
-
             public bool Use500GPYield = false;
-
             public int GP500Yield = 500;
-
             public bool Use100GPYield = false;
-
             public int GP100Yield = 100;
-
             public bool UseTidings = false;
-
             public int GPTidings = 200;
-
             public int GatherersBoon = 100;
-
             public bool UseGivingLand = false;
-
             public int GPGivingLand = 200;
-
             public bool UseTwelvesBounty = false;
-
             public int GPTwelvesBounty = 150;
-
             public bool UseSolidReason = false;
-
             public int GPSolidReason = 300;
-
             public bool UseLuck = false;
-
             public int GPLuck = 200;
-
             public bool GatherChanceUp = false;
-
             public int GPGatherChanceUp = 100;
-
             public bool UseGatherLimit = false;
             public int GatherLimit = 10;
         }
 
         public Configs Config { get; private set; }
 
-
         public override FeatureType FeatureType => FeatureType.Other;
-
         private Overlays? overlay;
-
         public override bool UseAutoConfig => false;
 
         private uint lastGatheredIndex = 10;
         private uint lastGatheredItem = 0;
         private uint CurrentIntegrity { get; set; } = 0;
         private uint MaxIntegrity { get; set; } = 0;
-        private int currentGatherCount = 0;   // Counter for gather limit feature (per node)
+        private int currentGatherCount = 0;
+        private uint lastIntegrity = 0;
 
         public override bool DrawConditions()
         {
@@ -248,8 +219,28 @@ namespace PandorasBox.Features.Other
             var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
             if (addon != null)
             {
-                CurrentIntegrity = addon->AtkValues[109].UInt;
-                MaxIntegrity = addon->AtkValues[110].UInt;
+                var newIntegrity = addon->AtkValues[109].UInt;
+                var maxIntegrity = addon->AtkValues[110].UInt;
+
+                if (Config.UseGatherLimit && Config.GatherLimit > 0 && newIntegrity < lastIntegrity && lastIntegrity > 0)
+                {
+                    currentGatherCount++;
+                    if (currentGatherCount >= Config.GatherLimit)
+                    {
+                        ((AtkUnitBase*)addon)->Close(true);
+                        currentGatherCount = 0;
+                        lastIntegrity = 0;
+                        return;
+                    }
+                }
+
+                CurrentIntegrity = newIntegrity;
+                MaxIntegrity = maxIntegrity;
+                lastIntegrity = CurrentIntegrity;
+            }
+            else
+            {
+                lastIntegrity = 0;
             }
         }
 
@@ -481,9 +472,8 @@ namespace PandorasBox.Features.Other
                 }
                 else
                 {
-                    ImGui.Text(""); // maintain alignment
+                    ImGui.Text("");
                 }
-                // ------------------------------
 
                 ImGui.Columns(1);
 
@@ -539,7 +529,6 @@ namespace PandorasBox.Features.Other
                     {
                         ids.Add(addon->AtkValues[i].UInt);
                     }
-                    Svc.Log.Debug($"Gathering IDs: {string.Join(", ", ids)}");
                     if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
@@ -558,10 +547,8 @@ namespace PandorasBox.Features.Other
 
                     if (item != 0)
                     {
-                        // Per‑node limit check before gathering
                         if (Config.UseGatherLimit && currentGatherCount >= Config.GatherLimit)
                         {
-                            Svc.Chat.Print($"[Pandora Quick Gather] Gather limit ({Config.GatherLimit}) reached on this node. Window closed.");
                             ((AtkUnitBase*)addon)->Close(true);
                             return;
                         }
@@ -621,9 +608,11 @@ namespace PandorasBox.Features.Other
         {
             if (Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
             {
-                // Reset gather counter for new node (per‑node limit)
                 if (Config.UseGatherLimit)
+                {
                     currentGatherCount = 0;
+                    lastIntegrity = 0;
+                }
 
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                 TaskManager.Enqueue(() =>
@@ -647,7 +636,6 @@ namespace PandorasBox.Features.Other
 
                     if (Config.RememberLastNode && Config.DontBuffIfItemNotPresent && !ids.Any(x => x is not 0 && x == lastGatheredItem))
                     {
-                        Svc.Log.Debug("Last gathered item not found in current node.");
                         return;
                     }
 
@@ -655,15 +643,11 @@ namespace PandorasBox.Features.Other
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
                         Dictionary<uint, int> boonChances = new();
-                        Dictionary<int, int> gatherChances = new();
-
                         for (uint i = 0; i <= 7; i++)
                         {
                             int.TryParse(addon->GetNodeById(17 + i)->GetAsAtkComponentNode()->Component->GetNodeById(16)->GetAsAtkTextNode()->NodeText.ToString(), out var boonChance);
                             boonChances.Add(i, boonChance);
                         }
-
-                        Svc.Log.Debug($"Boon Chances: {string.Join(", ", boonChances)}");
 
                         if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.Objects.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed)
                         {
@@ -692,11 +676,6 @@ namespace PandorasBox.Features.Other
                         {
                             TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        }
-
-                        if (Config.GPGatherChanceUp <= Svc.Objects.LocalPlayer.CurrentGp && Config.GatherChanceUp)
-                        {
-
                         }
 
                         if (Config.GPGivingLand <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseGivingLand)
@@ -732,10 +711,8 @@ namespace PandorasBox.Features.Other
 
                             var integrityLeft = CurrentIntegrity;
 
-                            // Per‑node limit check before queuing the gather
                             if (Config.UseGatherLimit && currentGatherCount >= Config.GatherLimit)
                             {
-                                Svc.Chat.Print($"[Pandora Quick Gather] Gather limit ({Config.GatherLimit}) reached on this node. Window closed.");
                                 addon->AtkUnitBase.Close(true);
                                 return;
                             }
@@ -749,35 +726,12 @@ namespace PandorasBox.Features.Other
         }
 
         private void ResetCounter(ConditionFlag flag, bool value)
-    {
-        if (flag == ConditionFlag.Gathering && !value)
         {
-            if (Config.UseGatherLimit && Config.GatherLimit > 0)
+            if (flag == ConditionFlag.Gathering && !value)
             {
-                currentGatherCount++;
-                Svc.Log.Debug($"Gather count incremented to {currentGatherCount}/{Config.GatherLimit}");
-    
-                if (currentGatherCount >= Config.GatherLimit)
-                {
-                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                    Svc.Chat.Print($"[DEBUG] Limit reached. Addon pointer: {(nint)addon:X}");
-                    if (addon != null)
-                    {
-                        Svc.Chat.Print("[DEBUG] Calling Close(true)");
-                        addon->Close(true);
-                        Svc.Chat.Print("[DEBUG] Close called. IsVisible after? " + addon->IsVisible);
-                    }
-                    else
-                    {
-                        Svc.Chat.Print("[DEBUG] Addon is null, cannot close.");
-                    }
-                    currentGatherCount = 0;
-                }
+                TaskManager.Abort();
             }
-            TaskManager.Abort();
         }
-    }
-
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
@@ -916,7 +870,6 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
-            // ----- Gather Limit in Config Tree -----
             if (ImGui.Checkbox("Enable Gather Limit", ref Config.UseGatherLimit))
                 SaveConfig(Config);
             if (Config.UseGatherLimit)
@@ -930,7 +883,6 @@ namespace PandorasBox.Features.Other
                 ImGui.PopItemWidth();
                 ImGui.TextColored(ImGuiColors.DalamudGrey, "Closes the Gathering window after this many successful gathers per node.");
             }
-            // ------------------------------------------
         };
 
         private void ClickGather(uint index)
@@ -953,13 +905,13 @@ namespace PandorasBox.Features.Other
         {
             switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
             {
-                case 17: //BTN
+                case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4095);
                     }
                     break;
-                case 16: //MIN
+                case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4081) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4081);
@@ -972,7 +924,7 @@ namespace PandorasBox.Features.Other
         {
             foreach (var id in ids.Where(x => x != 0))
             {
-                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
+                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false;
                 if (Maps.Any(x => x.MapId == id)) return false;
                 if (Items.Any(x => x.ItemId == id)) return false;
 
@@ -980,7 +932,6 @@ namespace PandorasBox.Features.Other
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
             var NodeId = Svc.Objects.LocalPlayer?.TargetObject?.BaseId;
             var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
-            Svc.Log.Debug($"{baseNode?.RowId}");
             if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
             if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
 
@@ -1140,14 +1091,14 @@ namespace PandorasBox.Features.Other
 
             switch (chara.ClassJob.RowId)
             {
-                case 17: //BTN
+                case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21204);
                         TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
-                case 16: //MIN
+                case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21203);
