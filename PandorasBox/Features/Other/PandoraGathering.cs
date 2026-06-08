@@ -202,6 +202,9 @@ namespace PandorasBox.Features.Other
             public bool GatherChanceUp = false;
 
             public int GPGatherChanceUp = 100;
+
+            public bool UseGatherLimit = false;
+            public int GatherLimit = 10;
         }
 
         public Configs Config { get; private set; }
@@ -217,6 +220,7 @@ namespace PandorasBox.Features.Other
         private uint lastGatheredItem = 0;
         private uint CurrentIntegrity { get; set; } = 0;
         private uint MaxIntegrity { get; set; } = 0;
+        private int currentGatherCount = 0;   // Counter for gather limit feature (per node)
 
         public override bool DrawConditions()
         {
@@ -460,6 +464,27 @@ namespace PandorasBox.Features.Other
                 if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
                     SaveConfig(Config);
 
+                ImGui.NextColumn();
+                if (ImGui.Checkbox("Gather Limit", ref Config.UseGatherLimit))
+                    SaveConfig(Config);
+                ImGui.NextColumn();
+                if (Config.UseGatherLimit)
+                {
+                    ImGui.SetNextItemWidth(80);
+                    if (ImGui.InputInt("##GatherLimit", ref Config.GatherLimit, 1, 10))
+                    {
+                        if (Config.GatherLimit < 1) Config.GatherLimit = 1;
+                        SaveConfig(Config);
+                    }
+                    ImGui.SameLine();
+                    ImGui.Text("then close");
+                }
+                else
+                {
+                    ImGui.Text(""); // maintain alignment
+                }
+                // ------------------------------
+
                 ImGui.Columns(1);
 
                 if (LocationEffect.Length > 0)
@@ -533,6 +558,14 @@ namespace PandorasBox.Features.Other
 
                     if (item != 0)
                     {
+                        // Per‑node limit check before gathering
+                        if (Config.UseGatherLimit && currentGatherCount >= Config.GatherLimit)
+                        {
+                            Svc.Chat.Print($"[Pandora Quick Gather] Gather limit ({Config.GatherLimit}) reached on this node. Window closed.");
+                            ((AtkUnitBase*)addon)->Close(true);
+                            return;
+                        }
+
                         if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.RowId == 0))
                         {
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
@@ -588,6 +621,10 @@ namespace PandorasBox.Features.Other
         {
             if (Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
             {
+                // Reset gather counter for new node (per‑node limit)
+                if (Config.UseGatherLimit)
+                    currentGatherCount = 0;
+
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                 TaskManager.Enqueue(() =>
                 {
@@ -614,7 +651,7 @@ namespace PandorasBox.Features.Other
                         return;
                     }
 
-                    var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
+                    var nodeHasCollectibles = ids.Any(x => Svc.Data.GetExcelSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
                         Dictionary<uint, int> boonChances = new();
@@ -694,6 +731,15 @@ namespace PandorasBox.Features.Other
                             }
 
                             var integrityLeft = CurrentIntegrity;
+
+                            // Per‑node limit check before queuing the gather
+                            if (Config.UseGatherLimit && currentGatherCount >= Config.GatherLimit)
+                            {
+                                Svc.Chat.Print($"[Pandora Quick Gather] Gather limit ({Config.GatherLimit}) reached on this node. Window closed.");
+                                addon->AtkUnitBase.Close(true);
+                                return;
+                            }
+
                             if (integrityLeft > 1)
                                 ClickGather(lastGatheredIndex);
                         }
@@ -706,6 +752,25 @@ namespace PandorasBox.Features.Other
         {
             if (flag == ConditionFlag.Gathering && !value)
             {
+                // Gathering finished - increment counter if limit feature is enabled
+                if (Config.UseGatherLimit && Config.GatherLimit > 0)
+                {
+                    currentGatherCount++;
+                    Svc.Log.Debug($"Gather count incremented to {currentGatherCount}/{Config.GatherLimit}");
+
+                    // If limit reached, close the window immediately
+                    if (currentGatherCount >= Config.GatherLimit)
+                    {
+                        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+                        if (addon != null)
+                        {
+                            addon->Close(true);
+                            Svc.Chat.Print($"[Pandora Quick Gather] Reached gather limit ({Config.GatherLimit}) on this node. Window closed.");
+                        }
+                        // Reset counter for next node (will be re‑zeroed in AddonSetup anyway)
+                        currentGatherCount = 0;
+                    }
+                }
                 TaskManager.Abort();
             }
         }
@@ -848,6 +913,21 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
+            // ----- Gather Limit in Config Tree -----
+            if (ImGui.Checkbox("Enable Gather Limit", ref Config.UseGatherLimit))
+                SaveConfig(Config);
+            if (Config.UseGatherLimit)
+            {
+                ImGui.PushItemWidth(150);
+                if (ImGui.InputInt("Gather Limit", ref Config.GatherLimit, 1, 10))
+                {
+                    if (Config.GatherLimit < 1) Config.GatherLimit = 1;
+                    SaveConfig(Config);
+                }
+                ImGui.PopItemWidth();
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Closes the Gathering window after this many successful gathers per node.");
+            }
+            // ------------------------------------------
         };
 
         private void ClickGather(uint index)
@@ -858,7 +938,6 @@ namespace PandorasBox.Features.Other
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                 if (addon is null) return;
 
-                if (addon is null) return;
                 var checkBox = addon->GetNodeById(17 + index)->GetAsAtkComponentCheckBox();
                 if (checkBox is null) return;
                 checkBox->AtkComponentButton.IsChecked = true;
@@ -901,7 +980,6 @@ namespace PandorasBox.Features.Other
             Svc.Log.Debug($"{baseNode?.RowId}");
             if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
             if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
-
 
             return false;
         }
@@ -1106,7 +1184,5 @@ namespace PandorasBox.Features.Other
 
             return true;
         }
-
-
     }
 }
