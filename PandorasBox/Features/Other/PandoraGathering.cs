@@ -261,18 +261,17 @@ namespace PandorasBox.Features.Other
                     if (currentGatherCount >= Config.GatherLimit)
                     {
                         limitReached = true;
-                        TaskManager.Abort();
-                        TaskManager.EnqueueDelay(100);
-                        TaskManager.Enqueue(() =>
+                        // Schedule window closure on the next frame to avoid crashes
+                        Svc.Framework.Run(() =>
                         {
-                            if (addon != null && addon->AtkUnitBase.IsVisible)
+                            var addonNow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+                            if (addonNow != null && addonNow->IsVisible)
                             {
-                                ECommons.Automation.Callback.Fire(&addon->AtkUnitBase, true, -1);
+                                ECommons.Automation.Callback.Fire(addonNow, true, -1);
                             }
                             limitReached = false;
                             currentGatherCount = 0;
                             lastIntegrity = 0;
-                            return true;
                         });
                         return;
                     }
@@ -562,8 +561,6 @@ namespace PandorasBox.Features.Other
 
         private void CheckNodeAndClick(int index)
         {
-            if (limitReached) return;
-
             try
             {
                 var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
@@ -599,9 +596,15 @@ namespace PandorasBox.Features.Other
                             if (!limitReached)
                             {
                                 limitReached = true;
-                                TaskManager.Abort();
-                                ECommons.Automation.Callback.Fire(&addon->AtkUnitBase, true, -1);
-                                limitReached = false;
+                                Svc.Framework.Run(() =>
+                                {
+                                    var addonNow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+                                    if (addonNow != null && addonNow->IsVisible)
+                                    {
+                                        ECommons.Automation.Callback.Fire(addonNow, true, -1);
+                                    }
+                                    limitReached = false;
+                                });
                             }
                             return;
                         }
@@ -780,9 +783,15 @@ namespace PandorasBox.Features.Other
                                 if (!limitReached)
                                 {
                                     limitReached = true;
-                                    TaskManager.Abort();
-                                    addon->AtkUnitBase.Close(true);
-                                    limitReached = false;
+                                    Svc.Framework.Run(() =>
+                                    {
+                                        var addonNow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+                                        if (addonNow != null && addonNow->IsVisible)
+                                        {
+                                            ECommons.Automation.Callback.Fire(addonNow, true, -1);
+                                        }
+                                        limitReached = false;
+                                    });
                                 }
                                 return;
                             }
