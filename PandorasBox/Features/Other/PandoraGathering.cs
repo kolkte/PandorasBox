@@ -146,22 +146,22 @@ namespace PandorasBox.Features.Other
 
         public static readonly (uint MapId, uint[] NodeIds)[] Maps =
         {
-            (6688,  new uint[]{20, 49, 137, 140, 141, 180}),
-            (6689,  new uint[]{46, 142, 143, 185, 186}),
-            (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}),
-            (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}),
-            (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}),
-            (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),
-            (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}),
-            (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}),
-            (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),
-            (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),
-            (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),
-            (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),
-            (36611, new uint[]{847, 848, 825, 826}),
-            (36612, new uint[]{847, 848, 825, 826}),
-            (39591, new uint[]{846, 844, 824, 823}),
-        };
+            (6688,  new uint[]{20, 49, 137, 140, 141, 180}),                                 // Leather
+            (6689,  new uint[]{46, 142, 143, 185, 186}),                                     // Goatskin
+            (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Toadskin
+            (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Boarskin
+            (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Peisteskin
+            (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),                     // Archaeoskin
+            (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Wyvernskin
+            (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Dragonskin
+            (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gaganaskin
+            (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gazelleskin
+            (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Gliderskin
+            (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Zonureskin
+            (36611, new uint[]{847, 848, 825, 826}),                                         // Saigaskin
+            (36612, new uint[]{847, 848, 825, 826}),                                         // Kumbhiraskin
+            (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
+         };
 
         private Hook<AddonGathering.Delegates.NotifyQuickGatherState> quickGatherToggle = null!;
 
@@ -172,46 +172,73 @@ namespace PandorasBox.Features.Other
         internal Vector4 TransparentTheme = new Vector4(0, 0, 0, 0);
 
         public override string Name => "Pandora Quick Gather";
+
         public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
 
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
         private string? LocationEffect;
         private string? LocationEffect2;
+
         private bool HiddenRevealed = false;
 
         public class Configs : FeatureConfig
         {
             public bool CollectibleStop = false;
+
             public bool ShiftStop = false;
+
             public bool Gathering = false;
+
             public bool RememberLastNode = false;
+
             public bool DontBuffIfItemNotPresent = false;
+
             public bool Use500GPYield = false;
+
             public int GP500Yield = 500;
+
             public bool Use100GPYield = false;
+
             public int GP100Yield = 100;
+
             public bool UseTidings = false;
+
             public int GPTidings = 200;
+
             public int GatherersBoon = 100;
+
             public bool UseGivingLand = false;
+
             public int GPGivingLand = 200;
+
             public bool UseTwelvesBounty = false;
+
             public int GPTwelvesBounty = 150;
+
             public bool UseSolidReason = false;
+
             public int GPSolidReason = 300;
+
             public bool UseLuck = false;
+
             public int GPLuck = 200;
+
             public bool GatherChanceUp = false;
+
             public int GPGatherChanceUp = 100;
+
             public bool UseGatherLimit = false;
             public int GatherLimit = 10;
         }
 
         public Configs Config { get; private set; }
 
+
         public override FeatureType FeatureType => FeatureType.Other;
+
         private Overlays? overlay;
+
         public override bool UseAutoConfig => false;
 
         private uint lastGatheredIndex = 10;
@@ -698,6 +725,8 @@ namespace PandorasBox.Features.Other
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
                         Dictionary<uint, int> boonChances = new();
+                        Dictionary<int, int> gatherChances = new();
+
                         for (uint i = 0; i <= 7; i++)
                         {
                             int.TryParse(addon->GetNodeById(17 + i)->GetAsAtkComponentNode()->Component->GetNodeById(16)->GetAsAtkTextNode()->NodeText.ToString(), out var boonChance);
@@ -733,6 +762,11 @@ namespace PandorasBox.Features.Other
                         {
                             TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                        }
+
+                        if (Config.GPGatherChanceUp <= Svc.Objects.LocalPlayer.CurrentGp && Config.GatherChanceUp)
+                        {
+
                         }
 
                         if (Config.GPGivingLand <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseGivingLand)
@@ -800,6 +834,7 @@ namespace PandorasBox.Features.Other
                 TaskManager.Abort();
             }
         }
+
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
@@ -961,6 +996,7 @@ namespace PandorasBox.Features.Other
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                 if (addon is null) return;
 
+                if (addon is null) return;
                 var checkBox = addon->GetNodeById(17 + index)->GetAsAtkComponentCheckBox();
                 if (checkBox is null) return;
                 checkBox->AtkComponentButton.IsChecked = true;
@@ -973,13 +1009,13 @@ namespace PandorasBox.Features.Other
         {
             switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
             {
-                case 17:
+                case 17: //BTN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4095);
                     }
                     break;
-                case 16:
+                case 16: //MIN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4081) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4081);
@@ -992,15 +1028,18 @@ namespace PandorasBox.Features.Other
         {
             foreach (var id in ids.Where(x => x != 0))
             {
-                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false;
+                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
                 if (Maps.Any(x => x.MapId == id)) return false;
                 if (Items.Any(x => x.ItemId == id)) return false;
+
             }
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
             var NodeId = Svc.Objects.LocalPlayer?.TargetObject?.BaseId;
             var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
+            Svc.Log.Debug($"{baseNode?.RowId}");
             if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
             if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
+
             return false;
         }
 
@@ -1021,9 +1060,9 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
             return true;
         }
-
         private bool? UseIntegrityAction()
         {
             switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
@@ -1041,6 +1080,7 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
             return true;
         }
 
@@ -1063,6 +1103,7 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
             return true;
         }
 
@@ -1085,6 +1126,7 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
             return true;
         }
 
@@ -1144,6 +1186,7 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
         }
 
         private void UseTidings()
@@ -1153,14 +1196,14 @@ namespace PandorasBox.Features.Other
 
             switch (chara.ClassJob.RowId)
             {
-                case 17:
+                case 17: //BTN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21204);
                         TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
-                case 16:
+                case 16: //MIN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21203);
@@ -1168,6 +1211,7 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
         }
 
         private void QuickGatherToggle(AddonGathering* thisPtr)
@@ -1196,7 +1240,10 @@ namespace PandorasBox.Features.Other
                     }
                     break;
             }
+
             return true;
         }
+
+
     }
 }
