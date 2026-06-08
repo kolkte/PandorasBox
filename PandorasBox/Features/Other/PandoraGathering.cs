@@ -262,7 +262,7 @@ namespace PandorasBox.Features.Other
                     {
                         limitReached = true;
                         TaskManager.Abort();
-                        TaskManager.DelayNext(200);
+                        TaskManager.EnqueueDelay(200);
                         TaskManager.Enqueue(() =>
                         {
                             var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
@@ -601,7 +601,7 @@ namespace PandorasBox.Features.Other
                             {
                                 limitReached = true;
                                 TaskManager.Abort();
-                                TaskManager.DelayNext(100);
+                                TaskManager.EnqueueDelay(100);
                                 TaskManager.Enqueue(() =>
                                 {
                                     var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
@@ -791,7 +791,7 @@ namespace PandorasBox.Features.Other
                                 {
                                     limitReached = true;
                                     TaskManager.Abort();
-                                    TaskManager.DelayNext(100);
+                                    TaskManager.EnqueueDelay(100);
                                     TaskManager.Enqueue(() =>
                                     {
                                         var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
