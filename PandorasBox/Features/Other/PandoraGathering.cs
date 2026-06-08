@@ -749,31 +749,34 @@ namespace PandorasBox.Features.Other
         }
 
         private void ResetCounter(ConditionFlag flag, bool value)
+    {
+        if (flag == ConditionFlag.Gathering && !value)
         {
-            if (flag == ConditionFlag.Gathering && !value)
+            if (Config.UseGatherLimit && Config.GatherLimit > 0)
             {
-                // Gathering finished - increment counter if limit feature is enabled
-                if (Config.UseGatherLimit && Config.GatherLimit > 0)
+                currentGatherCount++;
+                Svc.Log.Debug($"Gather count incremented to {currentGatherCount}/{Config.GatherLimit}");
+    
+                if (currentGatherCount >= Config.GatherLimit)
                 {
-                    currentGatherCount++;
-                    Svc.Log.Debug($"Gather count incremented to {currentGatherCount}/{Config.GatherLimit}");
-
-                    // If limit reached, close the window immediately
-                    if (currentGatherCount >= Config.GatherLimit)
+                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+                    Svc.Chat.Print($"[DEBUG] Limit reached. Addon pointer: {(nint)addon:X}");
+                    if (addon != null)
                     {
-                        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                        if (addon != null)
-                        {
-                            addon->Close(true);
-                            Svc.Chat.Print($"[Pandora Quick Gather] Reached gather limit ({Config.GatherLimit}) on this node. Window closed.");
-                        }
-                        // Reset counter for next node (will be re‑zeroed in AddonSetup anyway)
-                        currentGatherCount = 0;
+                        Svc.Chat.Print("[DEBUG] Calling Close(true)");
+                        addon->Close(true);
+                        Svc.Chat.Print("[DEBUG] Close called. IsVisible after? " + addon->IsVisible);
                     }
+                    else
+                    {
+                        Svc.Chat.Print("[DEBUG] Addon is null, cannot close.");
+                    }
+                    currentGatherCount = 0;
                 }
-                TaskManager.Abort();
             }
+            TaskManager.Abort();
         }
+    }
 
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
