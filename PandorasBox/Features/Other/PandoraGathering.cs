@@ -268,7 +268,7 @@ namespace PandorasBox.Features.Other
                             var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                             if (closeAddon != null && closeAddon->IsVisible)
                             {
-                                ECommons.Automation.Callback.Fire(closeAddon, true, -1);
+                                closeAddon->Close(true);
                             }
                             limitReached = false;
                             currentGatherCount = 0;
@@ -607,7 +607,7 @@ namespace PandorasBox.Features.Other
                                     var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                                     if (closeAddon != null && closeAddon->IsVisible)
                                     {
-                                        ECommons.Automation.Callback.Fire(closeAddon, true, -1);
+                                        closeAddon->Close(true);
                                     }
                                     limitReached = false;
                                     return true;
@@ -797,7 +797,7 @@ namespace PandorasBox.Features.Other
                                         var closeAddon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                                         if (closeAddon != null && closeAddon->IsVisible)
                                         {
-                                            ECommons.Automation.Callback.Fire(closeAddon, true, -1);
+                                            closeAddon->Close(true);
                                         }
                                         limitReached = false;
                                         return true;
