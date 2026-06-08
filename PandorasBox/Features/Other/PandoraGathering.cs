@@ -43,6 +43,26 @@ namespace PandorasBox.Features.Other
             keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
         }
 
+        private void CloseGatheringWithEscape()
+        {
+            TaskManager.Enqueue(() =>
+            {
+                var timeout = 3000;
+                var start = Environment.TickCount;
+                while (Environment.TickCount - start < timeout)
+                {
+                    var addon = Svc.GameGui.GetAddonByName("Gathering");
+                    if (addon == nint.Zero)
+                    {
+                        return true;
+                    }
+                    SendEscape();
+                    TaskManager.DelayNext(100);
+                }
+                return true;
+            });
+        }
+
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
             (4785, 7715), // Paprika
@@ -277,7 +297,7 @@ namespace PandorasBox.Features.Other
                         TaskManager.EnqueueDelay(200);
                         TaskManager.Enqueue(() =>
                         {
-                            SendEscape();
+                            CloseGatheringWithEscape();
                             limitReached = false;
                             currentGatherCount = 0;
                             lastIntegrity = 0;
@@ -612,7 +632,7 @@ namespace PandorasBox.Features.Other
                                 TaskManager.EnqueueDelay(100);
                                 TaskManager.Enqueue(() =>
                                 {
-                                    SendEscape();
+                                    CloseGatheringWithEscape();
                                     limitReached = false;
                                     return true;
                                 });
@@ -798,7 +818,7 @@ namespace PandorasBox.Features.Other
                                     TaskManager.EnqueueDelay(100);
                                     TaskManager.Enqueue(() =>
                                     {
-                                        SendEscape();
+                                        CloseGatheringWithEscape();
                                         limitReached = false;
                                         return true;
                                     });
