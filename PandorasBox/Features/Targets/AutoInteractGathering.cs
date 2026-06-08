@@ -18,15 +18,13 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoInteractGathering : Feature
     {
-        // Throttle: only run expensive checks every 50ms (0.05 seconds)
         private DateTime lastCheck = DateTime.MinValue;
         private const double ThrottleIntervalMs = 50.0;
 
-        // Cached data for gathering points
-        private Dictionary<uint, uint> gatheringJobCache = new();          // BaseId -> job (0/1 Miner, 2/3 Botanist, 4/5 Fisher)
+        private Dictionary<uint, uint> gatheringJobCache = new();
         private Dictionary<uint, bool> isTimedUnspoiledCache = new();
         private Dictionary<uint, bool> isTimedEphemeralCache = new();
-        private Dictionary<uint, (bool IsLegendary, string Folklore)> legendaryInfoCache = new(); // BaseId -> (IsLegendary, FolkloreBook)
+        private Dictionary<uint, (bool IsLegendary, string Folklore)> legendaryInfoCache = new();
 
         public override string Name => "Auto-interact with Gathering Nodes";
         public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
@@ -76,7 +74,6 @@ namespace PandorasBox.Features.Targets
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            // Pre-cache all gathering point data on enable (one-time)
             CacheGatheringPointData();
             Svc.Framework.Update += RunFeature;
             Svc.Condition.ConditionChange += TriggerCooldown;
@@ -94,14 +91,12 @@ namespace PandorasBox.Features.Targets
             foreach (var point in gatheringPointSheet)
             {
                 uint baseId = point.RowId;
-                // Job from GatheringType
                 var gatheringType = point.GatheringPointBase.Value?.GatheringType.Value;
                 if (gatheringType != null)
                 {
                     gatheringJobCache[baseId] = gatheringType.RowId;
                 }
 
-                // Timed Unspoiled: rare pop time table exists and subcategory item is 0
                 var transient = gatheringPointTransientSheet.FirstOrDefault(t => t.RowId == baseId);
                 if (transient.RowId != 0 && transient.GatheringRarePopTimeTable.Value.RowId > 0)
                 {
@@ -110,11 +105,9 @@ namespace PandorasBox.Features.Targets
                         isTimedUnspoiledCache[baseId] = true;
                 }
 
-                // Timed Ephemeral: EphemeralStartTime != 65535
                 if (transient.RowId != 0 && transient.EphemeralStartTime != 65535)
                     isTimedEphemeralCache[baseId] = true;
 
-                // Legendary: rare pop time table + folklore book + subcategory item != 0
                 if (transient.RowId != 0 && transient.GatheringRarePopTimeTable.Value.RowId > 0)
                 {
                     var subcategory = point.GatheringSubCategory.Value;
@@ -144,7 +137,6 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(IFramework framework)
         {
-            // Throttle: only run every ThrottleIntervalMs milliseconds
             if ((DateTime.Now - lastCheck).TotalMilliseconds < ThrottleIntervalMs)
                 return;
             lastCheck = DateTime.Now;
@@ -184,13 +176,11 @@ namespace PandorasBox.Features.Targets
 
             uint baseId = nearestNode.BaseId;
 
-            // Use cached job
             if (!gatheringJobCache.TryGetValue(baseId, out uint job))
                 return;
 
             int targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
 
-            // Exclude checks using cached data
             if (Config.ExcludeTimedUnspoiled && isTimedUnspoiledCache.ContainsKey(baseId))
                 return;
             if (Config.ExcludeTimedEphermeral && isTimedEphemeralCache.ContainsKey(baseId))
