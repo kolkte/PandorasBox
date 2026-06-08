@@ -18,6 +18,9 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoInteractGathering : Feature
     {
+        private DateTime lastInteraction = DateTime.Now;
+        private DateTime lastCheck = DateTime.Now;
+        private const double WatchdogSeconds = 10.0;
 
         public override string Name => "Auto-interact with Gathering Nodes";
         public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
@@ -90,6 +93,16 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(IFramework framework)
         {
+            if (TaskManager.IsBusy)
+            {
+                if ((DateTime.Now - lastInteraction).TotalSeconds > WatchdogSeconds)
+                {
+                    TaskManager.Abort();
+                    lastInteraction = DateTime.Now;
+                }
+                return;
+            }
+
             if (Svc.Condition[ConditionFlag.Gathering] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent])
                 return;
 
@@ -141,6 +154,7 @@ namespace PandorasBox.Features.Targets
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
+                lastInteraction = DateTime.Now;
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
@@ -148,6 +162,7 @@ namespace PandorasBox.Features.Targets
             }
             if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
+                lastInteraction = DateTime.Now;
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
@@ -155,6 +170,7 @@ namespace PandorasBox.Features.Targets
             }
             if (!Config.ExcludeFishing && job is 4 or 5 && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
+                lastInteraction = DateTime.Now;
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
